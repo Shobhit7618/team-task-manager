@@ -18,11 +18,10 @@ const server = http.createServer(app);
 
 // 🚀 FIXED FOR DOCKER ORCHESTRATION: 
 // Added "http://localhost" (port 80 where your Nginx frontend container lives!)
-const ALLOWED_ORIGINS = [
-  "http://localhost:5173", 
-  "http://127.0.0.1:5173",
-  "http://localhost",
-  "http://127.0.0.1"
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5000',
+  'https://team-task-manager-one-mocha.vercel.app'
 ];
 
 app.use(cors({
