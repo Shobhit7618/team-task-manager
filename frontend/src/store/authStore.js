@@ -14,7 +14,9 @@ const useAuthStore = create((set) => ({
       const response = await api.post('/auth/login', { email, password });
       const { accessToken, user } = response.data;
       
-      sessionStorage.setItem('accessToken', accessToken);
+      // 🚀 Syncing with localStorage so your api.js interceptor can fetch it natively
+      localStorage.setItem('accessToken', accessToken);
+      
       set({ user, isAuthenticated: true, isLoading: false });
       return true;
     } catch (err) {
@@ -49,7 +51,7 @@ const useAuthStore = create((set) => ({
     } catch (err) {
       console.error('Logout error context cleanup:', err);
     } finally {
-      sessionStorage.removeItem('accessToken');
+      localStorage.removeItem('accessToken');
       set({ user: null, isAuthenticated: false });
     }
   },
