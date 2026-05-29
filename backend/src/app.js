@@ -16,20 +16,35 @@ const chatRoutes = require('./routes/chat.routes');
 const app = express();
 const server = http.createServer(app);
 
-// 🚀 FIXED FOR DOCKER ORCHESTRATION: 
-// Added "http://localhost" (port 80 where your Nginx frontend container lives!)
-const allowedOrigins = [
+// ==========================================
+// Dynamic Whitelist Configurations (CORS)
+// ==========================================
+const ALLOWED_ORIGINS = [
+  'http://localhost',
+  'http://localhost:80',
   'http://localhost:5173',
   'http://localhost:5000',
-  'https://team-task-manager-one-mocha.vercel.app'
+  'https://team-task-manager-one-mocha.vercel.app' // Live Production App Link
 ];
 
-app.use(cors({
-  origin: ALLOWED_ORIGINS,
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow server-to-server or curl requests with no origin header
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches whitelist array, or matches any vercel.app branch build preview
+    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || /\.vercel\.app$/.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Blocked by production CORS security policy'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-}));
+};
 
+// Mount configurations across express app pipeline
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -82,11 +97,7 @@ app.get('/health', async (req, res) => {
 // Advanced Socket.io Real-time Infrastructure
 // ==========================================
 const io = new Server(server, {
-  cors: {
-    origin: ALLOWED_ORIGINS,
-    credentials: true,
-    methods: ['GET', 'POST']
-  },
+  cors: corsOptions, // 🚀 Uses the clean dynamic interceptor block from above safely
   allowEIO3: true, 
   pingTimeout: 30000, 
   pingInterval: 10000,
@@ -217,8 +228,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-// 🚀 THE CRITICAL FIX FOR DOCKER: 
-// Explicitly pass '0.0.0.0' interface to broadcast outside the virtual network layer!
+// 🚀 Explicitly pass '0.0.0.0' interface to broadcast outside virtual network layers perfectly!
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server fully exposed and executing smoothly on interface 0.0.0.0:${PORT}`);
 });
